@@ -15,26 +15,25 @@ const (
 	FatalLevel
 )
 
-func (e *LogLevel) Set(s string) error {
-	*e = ParseLevel(s)
-	fmt.Println("日志等级设为:", *e)
+func (e LogLevel) Set(s string) error {
+	fmt.Println("日志等级设为:", ParseLevel(s))
 	return nil
 }
 
 func (e LogLevel) String() string {
 	switch e {
 	case TraceLevel:
-		return "TRACE"
+		return "[TRACE]"
 	case DebugLevel:
-		return "DEBUG"
+		return "[DEBUG]"
 	case InfoLevel:
-		return "INFO"
+		return "[INFO]"
 	case ErrorLevel:
-		return "ERROR"
+		return "[ERROR]"
 	case FatalLevel:
-		return "FATAL"
+		return "[FATAL]"
 	default:
-		return "NIL"
+		return "[NIL]"
 	}
 }
 

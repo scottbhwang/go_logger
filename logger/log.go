@@ -1,25 +1,35 @@
 package logger
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
 )
 
-var levelFlag string
-
 var log ILogger
 var Level = InfoLevel
+var Path string
 
 func init() {
 	flag.Var(&Level, "logger_level", "日志等级 debug,info,error")
-	log = &GlogLogger{}
+	flag.StringVar(&Path, "logger_path", "./", "日志等级 debug,info,error")
+	log = &GlogLogger{prefix: func(level LogLevel) string {
+		return DefaultPrefix(level) + " "
+	}}
 	flag.Set("alsologtostderr", "true")
+	flag.Set("log_dir", Path)
 }
 
 func WithContext(ctx context.Context) ILogger {
-	prefix := getPrefixStrFromContext(ctx)
-	return &GlogLogger{prefix: prefix}
+	prefix := getPrefixFromContext(ctx)
+	return &GlogLogger{prefix: func(level LogLevel) string {
+		return DefaultPrefix(level) + " " + prefix.String() + " "
+	}}
+}
+
+func DefaultPrefix(level LogLevel) string {
+	return level.String()
 }
 
 func Info(a ...interface{}) {
@@ -55,6 +65,12 @@ func SprintPretty(data interface{}) string {
 func Sprint(data interface{}) string {
 	val, _ := json.Marshal(data)
 	return string(val)
+}
+
+func SprintJsonStringPretty(j string) string {
+	var buf bytes.Buffer
+	_ = json.Indent(&buf, []byte(j), "", "    ")
+	return buf.String()
 }
 
 func CheckLevel(level LogLevel) bool {

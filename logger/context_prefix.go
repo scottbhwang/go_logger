@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"bytes"
 	"context"
 	"strings"
 )
@@ -8,8 +9,8 @@ import (
 // https://pkg.go.dev/google.golang.org/grpc/metadata#Join
 
 type prefixKey struct{}
+
 type Prefix struct {
-	Str  string
 	Data map[string]string
 }
 
@@ -29,7 +30,6 @@ func fromContext(ctx context.Context) (Prefix, bool) {
 
 func (e Prefix) Copy() Prefix {
 	copyP := newPrefix()
-	copyP.Str = e.Str
 	for k, v := range e.Data {
 		copyP.Data[k] = v
 	}
@@ -49,27 +49,29 @@ func AppendPrefix(ctx context.Context, key, value string) context.Context {
 	}
 }
 
-func getPrefixStrFromContext(ctx context.Context) string {
+func getPrefixFromContext(ctx context.Context) Prefix {
 	p, ok := fromContext(ctx)
 	if !ok {
-		return ""
+		return newPrefix()
 	}
-	return p.String()
+	return p
 }
 
 func (e Prefix) String() string {
-	if len(e.Str) > 0 {
-		return e.Str + " "
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+	for k, v := range e.Data {
+		if buffer.Len() > 1 {
+			buffer.WriteString(" ")
+		}
+		buffer.WriteString(k + ":" + v)
 	}
-	return ""
+	buffer.WriteString("]")
+	return buffer.String()
 }
 
 func (e Prefix) Append(key, value string) Prefix {
 	lowKey := strings.ToLower(key)
 	e.Data[lowKey] = value
-	if len(e.Str) > 0 {
-		e.Str += ","
-	}
-	e.Str += lowKey + "=" + value
 	return e
 }
